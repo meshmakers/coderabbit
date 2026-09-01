@@ -1,0 +1,95 @@
+# yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
+#
+# Organization-wide CodeRabbit configuration for github.com/meshmakers.
+#
+# This file applies to EVERY repository in the organization that does not ship
+# its own .coderabbit.yaml. A repository that needs an exception adds its own
+# file starting with `inheritance: true` so that it merges on top of this one
+# instead of replacing it. See README.md.
+
+language: "en-US"
+
+tone_instructions: >-
+  Be concise and technical. Skip praise and restating what the code does.
+  Raise an issue only when it affects behaviour, security, or maintainability.
+
+reviews:
+  profile: "chill"
+  request_changes_workflow: false   # never block a merge
+  high_level_summary: true
+  collapse_walkthrough: true
+  poem: false
+
+  auto_review:
+    enabled: true
+    auto_incremental_review: true
+    drafts: false
+    base_branches:
+      - "main"
+      - "release/.*"
+    ignore_usernames:
+      - "dependabot[bot]"
+
+  path_filters:
+    - "!**/bin/**"
+    - "!**/obj/**"
+    - "!**/dist/**"
+    - "!**/*.Designer.cs"
+    - "!**/*.g.cs"                  # construction kit source generation output
+    - "!**/*.generated.ts"          # GraphQL codegen output
+    - "!**/package-lock.json"
+
+  path_instructions:
+    - path: "**/*.cs"
+      instructions: >-
+        Nullable reference types are enabled and warnings are errors.
+        Flag nullable annotation mistakes. Construction Kit models must be
+        registered in DI before AddMongoDbRuntimeRepository(); base models
+        before dependent ones.
+
+    - path: "**/ConstructionKit/**/*.yaml"
+      instructions: >-
+        Construction Kit model definitions. Check that dependency ranges in
+        ckModel.yaml stay consistent. Type names must not be prefixed with
+        "Ck" (the framework derives the Ck/Rt split itself) and must not be
+        named "Pipeline" (collides with ETL data flow pipelines).
+
+    - path: "**/pipelines/**/*.yaml"
+      instructions: >-
+        OctoMesh ETL pipeline definitions. The deserializer is strict: unknown
+        keys throw at load time, so adding a key is not backwards compatible.
+        Flag any key that does not appear in sibling pipeline files.
+
+    - path: "**/*.ps1"
+      instructions: >-
+        octo-tools automation. Flag interactive prompts in code paths that
+        agents and CI run non-interactively.
+
+  tools:
+    eslint:
+      enabled: true
+    biome:
+      enabled: true
+    psscriptanalyzer:
+      enabled: true
+    yamllint:
+      enabled: true
+    checkov:
+      enabled: true
+    hadolint:
+      enabled: true
+    semgrep:
+      enabled: true
+    gitleaks:
+      enabled: true
+    github-checks:
+      enabled: true
+
+knowledge_base:
+  code_guidelines:
+    enabled: true
+    filePatterns:
+      - "**/CLAUDE.md"                # already a default; listed for clarity
+      - "coderabbit:standards/*.md"   # shared standards from this repository
+  learnings:
+    scope: "auto"
