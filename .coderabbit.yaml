@@ -4,8 +4,12 @@
 #
 # This file applies to EVERY repository in the organization that does not ship
 # its own .coderabbit.yaml. A repository that needs an exception adds its own
-# file starting with `inheritance: true` so that it merges on top of this one
-# instead of replacing it. See README.md.
+# file with `inheritance: true` at root level so that it merges on top of this
+# one instead of replacing it. See README.md.
+#
+# Some values restate schema defaults on purpose: file-based central config
+# outranks repository and organization UI settings, so explicit lines pin
+# behaviour against UI drift and keep review configuration versioned.
 
 language: "en-US"
 
@@ -20,13 +24,31 @@ reviews:
   collapse_walkthrough: true
   poem: false
 
+  pre_merge_checks:
+    title:
+      mode: "warning"
+      requirements: >-
+        Functional pull requests are titled
+        "AB#<work item> <Fix|New|Chore|Refactor|Test|Docs>: <description>"
+        where the number is the Azure Boards work item. Automated PRs (release
+        manifests, documentation-harvest bots, dependabot) and merge commits
+        are exempt.
+    docstrings:
+      mode: "off"   # no org-wide docstring-coverage mandate; repos that want XML docs enforce CS1591 themselves
+
+  finishing_touches:
+    unit_tests:
+      enabled: false   # open beta; org test stacks (xUnit v3 / TUnit on Microsoft.Testing.Platform) are uncommon — trial per repo first
+    resolve_merge_conflict:
+      enabled: false   # never auto-commit conflict resolutions; serialization-parity and seed-data files make this dangerous
+
   auto_review:
     enabled: true
     auto_incremental_review: true
+    auto_pause_after_reviewed_commits: 0   # default 5 silently pauses long-running PRs; our feature branches commit incrementally
     drafts: false
     base_branches:
-      - "main"
-      - "release/.*"
+      - "release/.*"   # the default branch is always reviewed; only extra branches are listed here
     ignore_usernames:
       - "dependabot[bot]"
 
@@ -34,62 +56,303 @@ reviews:
     - "!**/bin/**"
     - "!**/obj/**"
     - "!**/dist/**"
+    - "!**/nuget/**"                # local DebugL package drop
     - "!**/*.Designer.cs"
-    - "!**/*.g.cs"                  # construction kit source generation output
-    - "!**/*.generated.ts"          # GraphQL codegen output
+    - "!**/*.g.cs"                  # source-generator output
+    - "!**/*.generated.ts"          # GraphQL codegen output (custom-app repos)
     - "!**/package-lock.json"
 
   path_instructions:
     - path: "**/*.cs"
       instructions: >-
-        Nullable reference types are enabled and warnings are errors.
-        Flag nullable annotation mistakes. Construction Kit models must be
-        registered in DI before AddMongoDbRuntimeRepository(); base models
-        before dependent ones.
+        Nullable reference types are enabled and warnings are errors org-wide;
+        flag suppressions that hide a warning instead of fixing it. In the
+        shared-library repos (mm-common, octo-sdk, octo-communication-sdk,
+        octo-construction-kit-engine, octo-construction-kit-engine-mongodb,
+        octo-common-services, octo-distributedEventHub) every removed, renamed,
+        or signature-changed public API is a cross-repo breaking change:
+        consumers reference these as NuGet packages and only break on their next
+        build — ask which downstream repos were rebuilt. Several core projects
+        multi-target net10.0;netstandard2.0 (source-generator hosts) or
+        net8.0;net9.0;net10.0 (mm-common): flag net10-only BCL APIs used without
+        guards. Do NOT flag the relative order of AddCkModel*() vs
+        AddMongoDbRuntimeRepository() — BSON serializer setup is
+        order-independent by design (module initializer). See
+        standards/dotnet.md.
+
+    - path: "**/Directory.Build.props"
+      instructions: >-
+        The DebugL configuration is the local-dev contract: it must pin
+        Version/PackageVersion and the Octo*Version properties to 999.0.0 and
+        prepend the workspace ../nuget folder to RestoreSources. Flag any
+        hardcoded concrete release version in OctoCoreLibVersion or
+        OctoCommVersion — these pins are injected by CI templates and the
+        release trains; the in-repo fallback must stay a floating range.
 
     - path: "**/ConstructionKit/**/*.yaml"
       instructions: >-
-        Construction Kit model definitions. Check that dependency ranges in
-        ckModel.yaml stay consistent. Type names must not be prefixed with
-        "Ck" (the framework derives the Ck/Rt split itself) and must not be
-        named "Pipeline" (collides with ETL data flow pipelines).
+        Construction Kit model YAML. Any content change under types/, records/,
+        attributes/, enums/, or associations/ requires an honest SemVer bump of
+        the modelId version in ckModel.yaml — CI validates against the published
+        catalog and hard-fails (removals and valueType changes are MAJOR and
+        need a migration; additions are at least MINOR). Type names are
+        PascalCase, never prefixed with "Ck" (the generator derives Ck/Rt class
+        names itself), and never reuse platform-reserved names (Pipeline,
+        DataFlow, Adapter, Pool, Application). Importing a CK model generates
+        the GraphQL schema automatically — no separate GraphQL work is needed.
+        See standards/construction-kit.md.
+
+    - path: "**/ConstructionKit/migrations/**"
+      instructions: >-
+        CK migrations: migration-meta.yaml entries and the {from}-to-{to}.yaml
+        scripts must stay internally consistent — the script's
+        sourceVersion/targetVersion must match its filename and the meta entry.
+        In blueprint-update migrations, target blocks need
+        blueprintSourceOnly: false, and transforms use "Transform" +
+        "type: SetValue" (the "Update" + "data:" shape does not deserialize).
+
+    - path: "**/blueprint.yaml"
+      instructions: >-
+        Blueprint manifests: ckModelDependencies here and the dependencies
+        header in seed-data/entities.yaml must declare IDENTICAL version
+        ranges. The blueprint engine installs the FLOOR of each range while
+        published CK artifacts freeze exact pins — when one model's floor
+        moves, the floors of paired models must move with it. Never list a
+        System.* platform blueprint (e.g. System.Communication) under
+        blueprintDependencies — those are embedded in the services and not
+        catalog-resolvable; declaring System.* CK MODELS under
+        ckModelDependencies is fine. Keep blueprint folders deployable-only:
+        blueprint.yaml, seed-data/, declared migrations — nothing else. See
+        standards/blueprints.md.
+
+    - path: "**/seed-data/*.yaml"
+      instructions: >-
+        Blueprint seed data: rtIds are stable, hand-assigned, and quoted as
+        strings (unquoted all-digit ids parse as YAML integers). Flag rtId
+        churn on existing entities (re-install upserts by rtId; a changed id
+        creates a duplicate). Exported entities lose all non-parent-child
+        associations — Application/Adapter entities need hand-restored
+        Pool/HelmRepositoryConfiguration association blocks. No credentials or
+        tenant-specific data: seed content is published to a public-ish
+        catalog. Flag tenant re-export noise (runtime-state attributes,
+        RtBlueprint* ownership fields, rtCreation/ChangedDateTime churn,
+        unversioned type ids). See standards/blueprints.md.
 
     - path: "**/pipelines/**/*.yaml"
       instructions: >-
-        OctoMesh ETL pipeline definitions. The deserializer is strict: unknown
-        keys throw at load time, so adding a key is not backwards compatible.
-        Flag any key that does not appear in sibling pipeline files.
+        OctoMesh ETL pipeline definitions. The YAML deserializer is STRICT:
+        unknown keys throw at load time, so a pipeline may only use nodes and
+        properties that the engine/adapter version deployed to the target
+        environment already ships. Node references bind as type: <Name>@<v> to
+        [NodeName] attributes in the engine and adapter repos. On
+        MakeHttpRequest@1 whose result later nodes need, require
+        "onHttpError: Throw" — the default logs, skips the rest, and reports
+        the run GREEN. Enum comparisons on data (Switch/If with valueType:
+        Enum) use the INTEGER key; enum writes (attributeValueType: Enum) use
+        the member NAME. See standards/pipelines.md.
+
+    - path: "**/Nodes/**/*.cs"
+      instructions: >-
+        Pipeline node implementations: node configuration classes are a
+        persisted, strictly-deserialized contract — renaming or removing a
+        property breaks every stored pipeline at load time; changes must be
+        additive with defaults. Nodes executing child transformations must run
+        them on the SAME live IDataContext (SwitchNode/IfNode pattern) — flag
+        any node that clones the document or builds an isolated sub-context
+        per execution; that breaks ForEach $.full aliases and the allocation
+        gates. See standards/pipelines.md.
 
     - path: "**/*.ps1"
       instructions: >-
-        octo-tools automation. Flag interactive prompts in code paths that
-        agents and CI run non-interactively.
+        PowerShell tooling. Automation-facing code paths must be runnable
+        non-interactively: confirmation prompts need a -Force bypass and must
+        refuse to prompt in -Json mode. Machine-readable output goes through
+        the Write-OctoJson/New-OctoActionResult helpers, never raw
+        ConvertTo-Json (default -Depth 2 silently truncates). After invoking
+        octo-ckc, octo-bpm, or any dotnet tool, gate on $LASTEXITCODE -ne 0,
+        never -eq 1 (the tools exit -6 on violations). Never emit kubeconfigs
+        or tokens in -Json output.
+
+    - path: "**/*.psm1"
+      instructions: >-
+        PowerShell modules (octo-tools conventions): a new modules/*.psm1 must
+        be added to the Import-Module list in modules/profile.ps1 — modules
+        are not auto-discovered. Confirmation prompts need a -Force bypass and
+        must refuse to prompt in -Json mode; machine-readable output goes
+        through Write-OctoJson/New-OctoActionResult, never raw ConvertTo-Json
+        (default -Depth 2 silently truncates). Never emit kubeconfigs or
+        tokens in -Json output.
+
+    - path: "**/azure-pipelines*.yml"
+      instructions: >-
+        Org CI conventions: keep the 4-segment build-number name format, the
+        meshmakers-ci-agents pool, and dev/*+test/*+main triggers. References
+        to octo-pipeline-templates must pin a tag (ref: refs/tags/tpl-vX.Y.Z),
+        never a branch; a pin bump is a deliberate change (helm-chart-build's
+        ci-templates are deliberately consumed from main — do not flag that).
+        Repos with ConstructionKit YAML need validate-ck-versions.yml wired
+        BEFORE the dotnet build step with every CK folder listed. Helm
+        packaging passes the 3-segment $(ChartVersion) as chart version and
+        the raw $(Build.BuildNumber) as --app-version; publish steps need
+        explicit isMain/isRelease conditions. In Microsoft.Testing.Platform
+        repos, the classic 'test' task's positional projects glob is silently
+        ignored on .NET 10 (cwd solution discovery runs instead, so
+        include/exclude globs are not enforced) — the explicit shape is
+        command 'custom' with '--solution' (octo-communication-operator
+        pattern); flag ineffective glob filters, not the shape itself. See
+        standards/ci-devops.md.
+
+    - path: "**/ansible/**/*.yml"
+      instructions: >-
+        Never use a Jinja expression as a dict KEY (e.g. for registry
+        pull-secret auths) — Ansible renders values but stores templated keys
+        literally, so kubelet never matches the registry host and image pulls
+        fail with a misleading 401. Build such dicts inside a single Jinja
+        expression via set_fact.
+
+    - path: "**/src/app/**/*.ts"
+      instructions: >-
+        Angular app code. In Refinery Studio, every feature route lives under
+        the /:tenantId segment — flag absolute navigations that drop the
+        tenant segment and tenant reads that bypass the route. Callers that
+        catch failed HTTP requests must check
+        MmHttpErrorInterceptor.reportsToUser(error) before showing their own
+        toast (the interceptor already reports status 0/403/400/409). In
+        @meshmakers library code, avoid instanceof against Angular classes —
+        hosts compiling the library from source load two @angular copies; use
+        structural checks. See standards/frontend.md.
+
+    - path: "**/src/app/graphQL/**"
+      instructions: >-
+        GraphQL codegen output: .ts files generated from sibling .graphql
+        documents (and possibleTypes.ts) must never be hand-edited — edit the
+        .graphql and run npm run codegen; flag a .graphql change whose
+        generated sibling did not change. EXCEPTION: Refinery Studio's
+        globalTypes.ts is a hand-maintained re-export shim of
+        @meshmakers/octo-services — there, flag NEW permanent type
+        declarations instead (temporaries need a TODO referencing the library
+        publication).
+
+    - path: "**/tests/**/*.csproj"
+      instructions: >-
+        Test projects: match the repo's established stack — do not introduce a
+        second test or mocking framework into an existing repo (a TUnit [Test]
+        in an xUnit project is silently never discovered, and vice versa).
+        Keep org-wide pins aligned (TUnit 1.65.63, xunit.v3 3.2.2,
+        FluentAssertions 8.10.0). Do not add --report-trx or
+        Microsoft.Testing.Extensions.TrxReport to xunit.v3 projects (MTP major
+        mismatch). Live-dependency tests belong in *SystemTests.csproj
+        projects (CI excludes them by that glob); DB-backed integration tests
+        use Testcontainers, never a hardcoded localhost database. See
+        standards/testing.md.
+
+    - path: "**/*.md"
+      instructions: >-
+        Documentation is English-only and durable: flag notes describing
+        transient problems ("currently broken", "known issue for now",
+        workarounds for in-flight bugs) — those belong in the work-item
+        tracker, not in READMEs or user-facing docs.
 
   tools:
-    eslint:
-      enabled: true
-    biome:
-      enabled: true
-    psscriptanalyzer:
-      enabled: true
-    yamllint:
-      enabled: true
-    checkov:
-      enabled: true
-    hadolint:
-      enabled: true
-    semgrep:
-      enabled: true
-    gitleaks:
-      enabled: true
+    # Nearly all CodeRabbit tools are enabled by default and run only when
+    # matching files exist — this section only makes deliberate choices.
+    ast-grep:
+      essential_rules: true   # CodeRabbit's curated security rule pack (restates the default to pin it)
     github-checks:
       enabled: true
 
 knowledge_base:
+  opt_out: false
   code_guidelines:
     enabled: true
+    # Repo-local CLAUDE.md / AGENTS.md / .cursorrules etc. are auto-detected by
+    # default (case-sensitive; custom patterns are additive). This entry pulls
+    # the org-wide standards from this repository via the documented repo:path
+    # syntax — files are read from this repo's default branch; CodeRabbit reads
+    # at most 50 guideline files per review.
     filePatterns:
-      - "**/CLAUDE.md"                # already a default; listed for clarity
-      - "coderabbit:standards/*.md"   # shared standards from this repository
+      - "coderabbit:standards/*.md"
   learnings:
-    scope: "auto"
+    scope: "global"   # one shared learning pool for all repos; the default "auto" silos learnings on public repos
+  pull_requests:
+    scope: "global"
+  jira:
+    usage: "disabled"   # work items live in Azure DevOps Boards
+  linear:
+    usage: "disabled"
+  # Cross-repo context: private repos may auto-link private repos, public repos
+  # only public ones. The manual links below give every review the shared
+  # contract-owning repos, so breaking-change detection can look across them.
+  automatic_linking_mode: "auto"
+  linked_repositories:
+    - repository: "meshmakers/mm-common"
+      instructions: >-
+        Base .NET utilities and the CommandLineParser used by octo-cli.
+        Multi-targets net8.0/net9.0/net10.0. Everything depends on it
+        transitively via NuGet.
+    - repository: "meshmakers/octo-construction-kit-engine"
+      instructions: >-
+        Construction Kit model contracts, compiler, runtime engine, source
+        generation, and the Rt serialization layer (System.Text.Json with
+        byte-level Newtonsoft parity). Consumed as NuGet packages by ~20 repos;
+        generated DI methods follow AddCkModel{Name}V{Major}().
+    - repository: "meshmakers/octo-construction-kit-engine-mongodb"
+      instructions: >-
+        MongoDB persistence for runtime entities and the query engine. CK
+        schema DTO fields added in the engine must be threaded through the
+        persistence entity, import copy, and read-back copy here, or they
+        silently read as defaults.
+    - repository: "meshmakers/octo-sdk"
+      instructions: >-
+        Service client SDK, adapter framework base, SDK source generation, and
+        the SignalR hub contracts (Communication.Contracts) consumed by the
+        communication controller, the Kubernetes operator, and every adapter —
+        hub/DTO changes must be additive with safe defaults because the fleet
+        is always mixed-version.
+    - repository: "meshmakers/octo-communication-sdk"
+      instructions: >-
+        The ETL pipeline engine (Sdk.Pipeline, deliberately keeping the
+        Meshmakers.Octo.Sdk.Common namespace), the strict pipeline YAML
+        serializer, SystemTextJsonOptions, and the Newtonsoft-parity test
+        oracle that validates serialization changes made in
+        octo-construction-kit-engine.
+    - repository: "meshmakers/octo-common-services"
+      instructions: >-
+        Shared ASP.NET infrastructure: tenant authorization middleware, tenant
+        capability keys, observability, notifications, and the MassTransit
+        message contracts (DistributionEventHub) that every backend service
+        consumes — message types route by CLR type identity and must not be
+        renamed.
+    - repository: "meshmakers/octo-distributedEventHub"
+      instructions: >-
+        MassTransit + RabbitMQ event bus layer used by all services.
+    - repository: "meshmakers/octo-communication-operator"
+      instructions: >-
+        KubeOps Kubernetes operator deploying adapter/application workloads via
+        Helm. Emits Helm values keys and layering (context < workload
+        ValuesYaml < overrides) that the octo-helm-core charts consume — key
+        renames on either side break deployments.
+    - repository: "meshmakers/octo-helm-core"
+      instructions: >-
+        Helm charts (octo-mesh, octo-mesh-crds, communication operator, demo
+        app) plus the CommunicationPool CRD YAML. Chart values keys are a
+        contract with the communication operator; published chart versions are
+        immutable.
+    - repository: "meshmakers/octo-frontend-libraries"
+      instructions: >-
+        The @meshmakers/* Angular library workspace (ordered dist-consuming
+        build). Consumer apps swap file: references for published npm versions
+        at Docker build time, so a consumer PR using a new library API needs
+        the library change published first.
+    - repository: "meshmakers/octo-pipeline-templates"
+      instructions: >-
+        Shared Azure DevOps CI step templates (validate-ck-versions,
+        validate-blueprints, set-version, build-and-push-docker) consumed by
+        ~30 repos pinned to tpl-v* tags. Template parameter changes are
+        org-wide breaking changes and require a tag + CHANGELOG entry. Despite
+        the name this repo contains CI templates, NOT ETL pipelines.
+    - repository: "meshmakers/octo-construction-kit"
+      instructions: >-
+        The published CK model libraries (Octo.Sdk.Packages.*, Industry.*) and
+        curated blueprints. CK YAML changes here must bump ckModel.yaml
+        versions honestly — CI validates against the published catalog.
