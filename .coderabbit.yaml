@@ -26,7 +26,7 @@ reviews:
 
   pre_merge_checks:
     title:
-      mode: "warning"
+      mode: "error"   # warning mode changed nothing (0 of 8 flagged titles were fixed in the first weeks); error fails the CodeRabbit status without blocking merges
       requirements: >-
         Functional pull requests are titled
         "AB#<work item> <Fix|New|Chore|Refactor|Test|Docs>: <description>"
@@ -47,8 +47,11 @@ reviews:
     auto_incremental_review: true
     auto_pause_after_reviewed_commits: 0   # default 5 silently pauses long-running PRs; our feature branches commit incrementally
     drafts: false
-    base_branches:
-      - "release/.*"   # the default branch is always reviewed; only extra branches are listed here
+    base_branches:   # the default branch is always reviewed; only extra branches are listed here
+      - "release/.*"
+      - "test/.*"      # integration branches such as test/0.2-dev
+      - "dev/.*"       # long-running dev branches that receive stacked PRs
+      - "feature/.*"
     ignore_usernames:
       - "dependabot[bot]"
 
@@ -66,13 +69,19 @@ reviews:
     - path: "**/*.cs"
       instructions: >-
         Nullable reference types are enabled and warnings are errors org-wide;
-        flag suppressions that hide a warning instead of fixing it. In the
+        flag suppressions that hide a warning instead of fixing it in
+        production code. In test code (tests/**) a null-forgiving `!` directly
+        after an assertion that already fails on null (Assert.NotNull,
+        Should().NotBeNull(), Assert.That(x).IsNotNull()) is the accepted
+        idiom — do not flag it. In the
         shared-library repos (mm-common, octo-sdk, octo-communication-sdk,
         octo-construction-kit-engine, octo-construction-kit-engine-mongodb,
         octo-common-services, octo-distributedEventHub) every removed, renamed,
         or signature-changed public API is a cross-repo breaking change:
         consumers reference these as NuGet packages and only break on their next
-        build — ask which downstream repos were rebuilt. Several core projects
+        build — ask which downstream repos were rebuilt. Before calling a
+        change breaking, confirm the API exists on the default branch: code
+        that never reached main has no consumers. Several core projects
         multi-target net10.0;netstandard2.0 (source-generator hosts) or
         net8.0;net9.0;net10.0 (mm-common): flag net10-only BCL APIs used without
         guards. Do NOT flag the relative order of AddCkModel*() vs
@@ -251,7 +260,13 @@ reviews:
         Documentation is English-only and durable: flag notes describing
         transient problems ("currently broken", "known issue for now",
         workarounds for in-flight bugs) — those belong in the work-item
-        tracker, not in READMEs or user-facing docs.
+        tracker, not in READMEs or user-facing docs. Apply this ONLY to lines
+        the PR adds or rewrites, never to pre-existing text. A bare work-item
+        reference (AB#nnnn) next to a durable rule may stay. A documented
+        product limitation that has a tracked work item is durable, not
+        transient. Review a code example once for correctness; do not iterate
+        on its idiom across follow-up PRs. When the same note appears in
+        several files, report it in one thread.
 
   tools:
     # Nearly all CodeRabbit tools are enabled by default and run only when
@@ -260,6 +275,8 @@ reviews:
       essential_rules: true   # CodeRabbit's curated security rule pack (restates the default to pin it)
     github-checks:
       enabled: true
+    languagetool:
+      enabled: false   # grammar/hyphenation nits ("14 digit") became inline review threads; prose wording is not worth a thread
 
 knowledge_base:
   opt_out: false
@@ -280,79 +297,14 @@ knowledge_base:
     usage: "disabled"   # work items live in Azure DevOps Boards
   linear:
     usage: "disabled"
-  # Cross-repo context: private repos may auto-link private repos, public repos
-  # only public ones. The manual links below give every review the shared
-  # contract-owning repos, so breaking-change detection can look across them.
+  # Cross-repo context comes from automatic repository linking (private repos
+  # may auto-link private and public repos, public repos only public ones).
+  # A manual linked_repositories list (12 contract-owning repos) was used from
+  # 2026-09-01 to 2026-09-09: the plan analyzes at most 10 links, CodeRabbit
+  # warned on every review, every repo received the same ten links whether
+  # relevant or not, and no automatic link ever appeared next to them. The
+  # list was removed to let auto-linking work per repository; the walkthrough
+  # section "Linked repositories identified" shows what a review actually
+  # used. The cross-repo dependency knowledge itself lives in
+  # standards/organization.md and is injected into every review regardless.
   automatic_linking_mode: "auto"
-  linked_repositories:
-    - repository: "meshmakers/mm-common"
-      instructions: >-
-        Base .NET utilities and the CommandLineParser used by octo-cli.
-        Multi-targets net8.0/net9.0/net10.0. Everything depends on it
-        transitively via NuGet.
-    - repository: "meshmakers/octo-construction-kit-engine"
-      instructions: >-
-        Construction Kit model contracts, compiler, runtime engine, source
-        generation, and the Rt serialization layer (System.Text.Json with
-        byte-level Newtonsoft parity). Consumed as NuGet packages by ~20 repos;
-        generated DI methods follow AddCkModel{Name}V{Major}().
-    - repository: "meshmakers/octo-construction-kit-engine-mongodb"
-      instructions: >-
-        MongoDB persistence for runtime entities and the query engine. CK
-        schema DTO fields added in the engine must be threaded through the
-        persistence entity, import copy, and read-back copy here, or they
-        silently read as defaults.
-    - repository: "meshmakers/octo-sdk"
-      instructions: >-
-        Service client SDK, adapter framework base, SDK source generation, and
-        the SignalR hub contracts (Communication.Contracts) consumed by the
-        communication controller, the Kubernetes operator, and every adapter —
-        hub/DTO changes must be additive with safe defaults because the fleet
-        is always mixed-version.
-    - repository: "meshmakers/octo-communication-sdk"
-      instructions: >-
-        The ETL pipeline engine (Sdk.Pipeline, deliberately keeping the
-        Meshmakers.Octo.Sdk.Common namespace), the strict pipeline YAML
-        serializer, SystemTextJsonOptions, and the Newtonsoft-parity test
-        oracle that validates serialization changes made in
-        octo-construction-kit-engine.
-    - repository: "meshmakers/octo-common-services"
-      instructions: >-
-        Shared ASP.NET infrastructure: tenant authorization middleware, tenant
-        capability keys, observability, notifications, and the MassTransit
-        message contracts (DistributionEventHub) that every backend service
-        consumes — message types route by CLR type identity and must not be
-        renamed.
-    - repository: "meshmakers/octo-distributedEventHub"
-      instructions: >-
-        MassTransit + RabbitMQ event bus layer used by all services.
-    - repository: "meshmakers/octo-communication-operator"
-      instructions: >-
-        KubeOps Kubernetes operator deploying adapter/application workloads via
-        Helm. Emits Helm values keys and layering (context < workload
-        ValuesYaml < overrides) that the octo-helm-core charts consume — key
-        renames on either side break deployments.
-    - repository: "meshmakers/octo-helm-core"
-      instructions: >-
-        Helm charts (octo-mesh, octo-mesh-crds, communication operator, demo
-        app) plus the CommunicationPool CRD YAML. Chart values keys are a
-        contract with the communication operator; published chart versions are
-        immutable.
-    - repository: "meshmakers/octo-frontend-libraries"
-      instructions: >-
-        The @meshmakers/* Angular library workspace (ordered dist-consuming
-        build). Consumer apps swap file: references for published npm versions
-        at Docker build time, so a consumer PR using a new library API needs
-        the library change published first.
-    - repository: "meshmakers/octo-pipeline-templates"
-      instructions: >-
-        Shared Azure DevOps CI step templates (validate-ck-versions,
-        validate-blueprints, set-version, build-and-push-docker) consumed by
-        ~30 repos pinned to tpl-v* tags. Template parameter changes are
-        org-wide breaking changes and require a tag + CHANGELOG entry. Despite
-        the name this repo contains CI templates, NOT ETL pipelines.
-    - repository: "meshmakers/octo-construction-kit"
-      instructions: >-
-        The published CK model libraries (Octo.Sdk.Packages.*, Industry.*) and
-        curated blueprints. CK YAML changes here must bump ckModel.yaml
-        versions honestly — CI validates against the published catalog.
