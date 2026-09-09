@@ -1,0 +1,249 @@
+<title>CodeRabbit First Weeks</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@600;700;800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+  :root {
+    --bg: #F7F8FA;
+    --surface: #FFFFFF;
+    --ink: #1B2230;
+    --muted: #5B6472;
+    --rule: #DDE2E9;
+    --rule-strong: #C3CAD4;
+    --cr: #0F766E;
+    --cr-soft: #E3F3F1;
+    --cp: #4F46E5;
+    --cp-soft: #E9E8FC;
+    --good: #15803D;
+    --good-soft: #E4F4EA;
+    --warn: #B45309;
+    --warn-soft: #FBEEDC;
+    --bad: #B91C1C;
+    --bad-soft: #FBE5E5;
+    --code-bg: #EEF1F5;
+    --display: "Manrope", "Avenir Next", "Segoe UI", sans-serif;
+    --body: "IBM Plex Sans", "Helvetica Neue", Arial, sans-serif;
+    --mono: "IBM Plex Mono", "SFMono-Regular", Menlo, monospace;
+    color-scheme: light dark;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #12161C; --surface: #1A2028; --ink: #E6EAF0; --muted: #9AA4B2; --rule: #2A323D; --rule-strong: #3A4552;
+      --cr: #3FB8AC; --cr-soft: #143734; --cp: #8B85F5; --cp-soft: #26254A;
+      --good: #4ADE80; --good-soft: #14321F; --warn: #F2A64A; --warn-soft: #3B2A12; --bad: #F87171; --bad-soft: #3D1A1A; --code-bg: #232B35;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #12161C; --surface: #1A2028; --ink: #E6EAF0; --muted: #9AA4B2; --rule: #2A323D; --rule-strong: #3A4552;
+    --cr: #3FB8AC; --cr-soft: #143734; --cp: #8B85F5; --cp-soft: #26254A;
+    --good: #4ADE80; --good-soft: #14321F; --warn: #F2A64A; --warn-soft: #3B2A12; --bad: #F87171; --bad-soft: #3D1A1A; --code-bg: #232B35;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--body); font-size: 16px; line-height: 1.55; }
+  .page { max-width: 1080px; margin: 0 auto; padding: 40px 28px 80px; }
+  header.top { display: grid; grid-template-columns: 1fr auto; gap: 24px; align-items: end; padding-bottom: 20px; border-bottom: 2px solid var(--ink); }
+  .eyebrow { font-family: var(--mono); font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+  h1 { font-family: var(--display); font-weight: 800; font-size: 40px; line-height: 1.05; margin: 6px 0 10px; letter-spacing: -0.01em; text-wrap: balance; }
+  .scope { color: var(--muted); font-size: 15px; max-width: 70ch; }
+  .meta { font-family: var(--mono); font-size: 12.5px; color: var(--muted); text-align: right; line-height: 1.7; }
+  h2 { font-family: var(--display); font-weight: 700; font-size: 24px; margin: 48px 0 12px; letter-spacing: -0.005em; text-wrap: balance; }
+  h3 { font-family: var(--display); font-weight: 700; font-size: 17px; margin: 26px 0 8px; }
+  p { max-width: 72ch; margin: 0 0 12px; }
+  ul, ol { max-width: 76ch; padding-left: 22px; margin: 0 0 12px; }
+  li { margin-bottom: 6px; }
+  li > strong { font-weight: 600; }
+  .verdict { display: grid; grid-template-columns: 1fr; gap: 10px; margin-top: 22px; padding: 18px 22px; background: var(--surface); border-left: 4px solid var(--cr); }
+  .verdict p { max-width: none; margin: 0; font-size: 17px; }
+  .tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin: 18px 0 6px; }
+  .tile { background: var(--surface); border: 1px solid var(--rule); padding: 14px 16px 12px; display: flex; flex-direction: column; gap: 2px; min-height: 108px; }
+  .tile .n { font-family: var(--display); font-weight: 800; font-size: 30px; line-height: 1; font-variant-numeric: tabular-nums; }
+  .tile .l { font-size: 13px; color: var(--muted); line-height: 1.3; }
+  .tile .s { font-family: var(--mono); font-size: 11.5px; color: var(--muted); margin-top: auto; }
+  .tile.cr .n { color: var(--cr); } .tile.cp .n { color: var(--cp); } .tile.bad .n { color: var(--bad); } .tile.warn .n { color: var(--warn); } .tile.good .n { color: var(--good); }
+  .bar { display: flex; height: 22px; width: 100%; max-width: 760px; overflow: hidden; margin: 10px 0 6px; font-family: var(--mono); font-size: 12px; color: #fff; }
+  .bar span { display: flex; align-items: center; justify-content: center; white-space: nowrap; }
+  .bar .b1 { background: var(--good); } .bar .b2 { background: var(--warn); } .bar .b3 { background: var(--bad); }
+  .legend { font-family: var(--mono); font-size: 12px; color: var(--muted); margin-bottom: 14px; }
+  .legend i { display: inline-block; width: 10px; height: 10px; margin-right: 5px; vertical-align: -1px; }
+  .tablewrap { overflow-x: auto; margin: 12px 0 18px; }
+  table { border-collapse: collapse; width: 100%; font-size: 14.5px; background: var(--surface); }
+  th, td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--rule); vertical-align: top; }
+  th { font-family: var(--mono); font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); font-weight: 500; border-bottom: 1px solid var(--rule-strong); }
+  td.num { font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap; }
+  th.num { text-align: right; }
+  td.k { font-weight: 600; white-space: nowrap; }
+  .pill { display: inline-block; font-family: var(--mono); font-size: 11.5px; padding: 2px 8px; border-radius: 999px; white-space: nowrap; }
+  .pill.p0 { background: var(--bad-soft); color: var(--bad); } .pill.p1 { background: var(--warn-soft); color: var(--warn); } .pill.p2 { background: var(--good-soft); color: var(--good); }
+  .pill.cr { background: var(--cr-soft); color: var(--cr); } .pill.cp { background: var(--cp-soft); color: var(--cp); }
+  code { font-family: var(--mono); font-size: 0.9em; background: var(--code-bg); padding: 1px 5px; border-radius: 3px; }
+  pre { font-family: var(--mono); font-size: 13px; line-height: 1.5; background: var(--code-bg); padding: 14px 16px; overflow-x: auto; margin: 10px 0 18px; border-left: 3px solid var(--rule-strong); }
+  pre code { background: none; padding: 0; }
+  .two { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 22px; }
+  .two h3 { margin-top: 12px; }
+  .note { color: var(--muted); font-size: 14px; }
+  footer { margin-top: 56px; padding-top: 16px; border-top: 1px solid var(--rule); color: var(--muted); font-size: 13px; font-family: var(--mono); }
+  @media (max-width: 640px) { header.top { grid-template-columns: 1fr; } .meta { text-align: left; } h1 { font-size: 32px; } }
+</style>
+
+<div class="page">
+  <header class="top">
+    <div>
+      <div class="eyebrow">meshmakers · AI review audit</div>
+      <h1>CodeRabbit First Weeks</h1>
+      <div class="scope">Every pull request in the GitHub org from 20 Aug to 9 Sep 2026: 275 PRs, 180 by people, 95 by Dependabot. CodeRabbit ran on trial repos from 25 Aug and org-wide with the central config from 1 Sep. GitHub Copilot review ran throughout and serves as the baseline.</div>
+    </div>
+    <div class="meta">2026-09-09<br>data: GitHub API dump<br>judgement: 8 review agents + skeptic pass<br>112 CodeRabbit threads · 23 Copilot threads</div>
+  </header>
+
+  <div class="verdict">
+    <p><strong>Worth keeping, not yet worth trusting blind.</strong> Where CodeRabbit reviewed, 38 % of its inline findings were real defects or contract violations and 39 of those 43 got fixed. But 18 % were wrong, and 15 of the 20 wrong ones come from five repeat patterns that our own configuration can remove.</p>
+    <p><strong>The bigger problem is coverage.</strong> Since 8 Sep 06:29 UTC CodeRabbit no longer auto-reviews public repositories with fewer than 10 stars. That is 33 active repos, including nearly every platform service, and 58 % of the human PR flow.</p>
+  </div>
+
+  <h2>The numbers</h2>
+  <div class="tiles">
+    <div class="tile cr"><div class="n">73 %</div><div class="l">human PRs reviewed by CodeRabbit since the org rollout (66 of 90)</div><div class="s">1–9 Sep</div></div>
+    <div class="tile cp"><div class="n">82 %</div><div class="l">human PRs reviewed by Copilot (148 of 180)</div><div class="s">full window</div></div>
+    <div class="tile"><div class="n">21 %</div><div class="l">human PRs with any human review; only one PR had a human inline comment</div><div class="s">bots are the review</div></div>
+    <div class="tile good"><div class="n">43</div><div class="l">substantive CodeRabbit findings, 39 fixed before merge</div><div class="s">of 112 threads</div></div>
+    <div class="tile bad"><div class="n">20</div><div class="l">CodeRabbit findings judged wrong after a skeptic re-check</div><div class="s">18 withdrawn by the bot itself</div></div>
+    <div class="tile warn"><div class="n">7</div><div class="l">PRs billed as overage in the 2 Sep migration wave (220 files, about $55)</div><div class="s">10 reviews/h cap</div></div>
+  </div>
+
+  <h3>Quality of the 112 CodeRabbit inline findings</h3>
+  <div class="bar"><span class="b1" style="width:38%">38 % substantive</span><span class="b2" style="width:44%">44 % correct, low value</span><span class="b3" style="width:18%">18 % wrong</span></div>
+  <div class="legend"><i style="background:var(--good)"></i>bug, security, data integrity, concurrency, enforced org rule &nbsp; <i style="background:var(--warn)"></i>wording, doc examples, test idiom nits &nbsp; <i style="background:var(--bad)"></i>misread code, speculative tool claims, stale or over-broad guideline</div>
+  <p>Substantive catches: 10 bugs, 10 data-integrity issues, 7 security issues, 5 concurrency or resilience issues, 6 enforced conventions, 3 blind tests, 2 doc contradictions. Examples: a shell-injection path in a codemod, an <code>!important</code> gap in the poison-mail regex, a credential left on a self-hosted agent when cleanup only warned, a per-path CK compile directory keyed on the leaf folder name, tenant leakage in blueprint seed data.</p>
+  <p>The author dialogue works: 81 of 112 threads got a bot reply confirming the fix or withdrawing the finding, and 24 learnings were recorded. Withdrawal was clean every time an author supplied concrete evidence.</p>
+
+  <h2>Where the wrong findings came from</h2>
+  <div class="tablewrap"><table>
+    <tr><th>Pattern</th><th class="num">Wrong</th><th>Root cause</th><th>Lever</th></tr>
+    <tr><td class="k">npm allowScripts version pinning</td><td class="num">5</td><td>Org decision AB#5071 D7 (name-only entries, lockless CI lanes) is not in any standards file; raised in 5 repos, withdrawn 5 times.</td><td>standards/frontend.md</td></tr>
+    <tr><td class="k">@angular/build reporter order</td><td class="num">4</td><td>Major-severity claim that JUnit output is lost; CI evidence disproved it. Repeated across repos before the first learning existed.</td><td>standards/testing.md + learning</td></tr>
+    <tr><td class="k">Null-forgiving <code>!</code> after an assert in tests</td><td class="num">4</td><td>Our own <code>**/*.cs</code> instruction ("flag suppressions") has no test-code carve-out.</td><td>path_instruction</td></tr>
+    <tr><td class="k">Vitest <code>.resolves.not.toThrow()</code> "fails"</td><td class="num">2</td><td>Matcher semantics misread; the pattern passes on the repo's Vitest.</td><td>standards/testing.md</td></tr>
+    <tr><td class="k">Breaking change on unreleased code</td><td class="num">1</td><td>Breaking-change rule fired on an API that never reached main.</td><td>path_instruction</td></tr>
+    <tr><td class="k">Cross-repo assumptions</td><td class="num">2</td><td>Private catalog treated as superset of public; core-pair Angular lock-step rule transplanted onto a custom app.</td><td>standards/blueprints.md, frontend.md</td></tr>
+    <tr><td class="k">Other misreads</td><td class="num">2</td><td>Tenant accessor conflation, exit-code hint text.</td><td>learning</td></tr>
+  </table></div>
+  <p>Low-value volume has one dominant source: the <code>**/*.md</code> durable-docs rule fired about 15 times, correct each time, but on cloned CLAUDE.md files across sibling repos, on pre-existing lines, and again on the PR that fixed it. Doc-example nitpicks cascaded over three follow-up PRs in octo-office-integration.</p>
+
+  <h2>Coverage gaps and operational friction</h2>
+  <div class="tablewrap"><table>
+    <tr><th>Symptom</th><th class="num">PRs</th><th>Cause</th></tr>
+    <tr><td class="k">"This repository does not receive automatic reviews because it has fewer than 10 stars"</td><td class="num">7 so far</td><td>Undocumented CodeRabbit rule for public repos, in effect since 8 Sep 06:29 UTC. Reviews still run on manual trigger. Affects 33 active public repos (all have 6–7 stars).</td></tr>
+    <tr><td class="k">Stacked and test-branch PRs skipped</td><td class="num">5</td><td><code>base_branches</code> lists only the default branch and <code>release/.*</code>; PRs onto <code>test/*</code>, <code>dev/*</code> or a feature branch wait for a manual <code>@coderabbitai review</code>.</td></tr>
+    <tr><td class="k">"I couldn't resolve this review thread"</td><td class="num">20 msgs</td><td>The GitHub App lacks the permission to resolve threads; fixed threads stay open as noise.</td></tr>
+    <tr><td class="k">Rate limited / overage billed</td><td class="num">4 / 7</td><td>The AB#5075 wave opened ~30 PRs in one hour on 2 Sep; each push is one review event. One PR consumed 15 review runs for 6 commits.</td></tr>
+    <tr><td class="k">Chat limit hit after four commands in 90 s</td><td class="num">3</td><td>One developer's manual review triggers were blocked. Looks like a missing seat; verify at app.coderabbit.ai.</td></tr>
+    <tr><td class="k">Title convention warned, never fixed</td><td class="num">8 of 8</td><td>The pre-merge title check runs in warning mode; 36 of 180 human PRs ignore the AB# format.</td></tr>
+    <tr><td class="k">Duplicate threads across incremental runs</td><td class="num">≥4</td><td>No dedup between review passes (mesh-adapter #47, octo-tools #16). No config lever; report to CodeRabbit.</td></tr>
+  </table></div>
+  <p class="note">Latency: CodeRabbit's first review lands after a median of 8 minutes (p75 13), Copilot after 3. Median time to merge is about one hour, so both reviewers are in time; every CodeRabbit review in the window arrived before the merge.</p>
+
+  <h2>CodeRabbit versus Copilot</h2>
+  <div class="tablewrap"><table>
+    <tr><th></th><th><span class="pill cr">CodeRabbit</span></th><th><span class="pill cp">Copilot review</span></th></tr>
+    <tr><td class="k">Coverage of human PRs</td><td>73 % since rollout; now blind on public repos without a manual trigger</td><td>82 %, independent of visibility, stars or base branch</td></tr>
+    <tr><td class="k">Inline findings</td><td>112 threads on 45 PRs</td><td>23 threads on 12 PRs; 52 further comments self-suppressed</td></tr>
+    <tr><td class="k">Judged quality</td><td>38 % substantive · 44 % minor · 18 % wrong</td><td>4 substantive · 6 minor · 1 wrong (of 11 on shared PRs)</td></tr>
+    <tr><td class="k">Overlap on shared PRs</td><td colspan="2">5 of 11 Copilot threads reported the same defect CodeRabbit found; CodeRabbit added the deeper variants (three sinks, not one). Copilot's unique findings were hygiene: <code>IDisposable</code>, invariant culture, parentheses.</td></tr>
+    <tr><td class="k">Org knowledge</td><td>Reads CLAUDE.md, the standards repo and path instructions; 29 findings cited them and they produced most substantive hits (seed data, pipelines, CI templates)</td><td>None beyond the diff; would need a <code>.github/copilot-instructions.md</code> per repo</td></tr>
+    <tr><td class="k">Dialogue</td><td>Verifies fixes, withdraws on evidence, records learnings</td><td>One-shot verdict (green / yellow / blue); no follow-up</td></tr>
+    <tr><td class="k">Cost and limits</td><td>Per-seat plan, 10 reviews/h, overage per file, chat limits</td><td>Included in the Copilot subscription, no observed limits</td></tr>
+  </table></div>
+  <p>Keep both. Copilot is the cheap safety net that currently covers the public repos; CodeRabbit is the one that knows the org rules and finds the deeper defect. Do not invest in tuning Copilot beyond a generated instructions file.</p>
+
+  <h2>Improvement plan</h2>
+  <div class="tablewrap"><table>
+    <tr><th>#</th><th>Action</th><th>Effect</th><th>Owner</th></tr>
+    <tr><td><span class="pill p0">P0</span></td><td class="k">Restore auto-review on public repos</td><td>Contact CodeRabbit (plan shows Advanced, yet the OSS star rule applies). Ask for paid seats to cover public repos or an org-level override. Until then, trigger reviews with the checkbox or <code>@coderabbitai review</code>.</td><td>Reimar</td></tr>
+    <tr><td><span class="pill p0">P0</span></td><td class="k">Approve the pending GitHub App permission update</td><td>Org settings → GitHub Apps → CodeRabbit. Lets the bot resolve threads it has verified; removes 20 "couldn't resolve" leftovers.</td><td>Org admin</td></tr>
+    <tr><td><span class="pill p0">P0</span></td><td class="k">Check seat assignment for all six developers</td><td>Explains the chat-limit block after four commands and unlocks manual triggers.</td><td>Org admin</td></tr>
+    <tr><td><span class="pill p1">P1</span></td><td class="k">Config PR in <code>coderabbit</code>: path instructions</td><td><code>**/*.cs</code>: exempt <code>!</code> after an assert in <code>tests/**</code>; breaking-change rule only after checking default-branch history. <code>**/*.md</code>: only lines the PR adds, bare AB# references allowed, tracked limitations are durable, one round on doc examples. Add <code>test/.*</code>, <code>dev/.*</code>, <code>feature/.*</code> to <code>base_branches</code>. Disable languagetool.</td><td>Reimar</td></tr>
+    <tr><td><span class="pill p1">P1</span></td><td class="k">Config PR: standards</td><td>frontend.md: allowScripts name-only policy (AB#5071 D7), lock-step rule scoped to the libraries/studio pair, @angular/build outputFile semantics. testing.md: Vitest matcher note, behavioural assertions, shared static test state needs one xUnit collection, USE_LOCAL_MONGODB fixtures drop their database. blueprints.md: private catalog is not a superset. organization.md: no <code>-k</code> and no secrets in argv in documented curl examples.</td><td>Reimar</td></tr>
+    <tr><td><span class="pill p1">P1</span></td><td class="k">Title check to <code>error</code></td><td>Warning mode changed nothing (0 of 8 fixed). Error mode fails the CodeRabbit status without blocking merges.</td><td>Reimar</td></tr>
+    <tr><td><span class="pill p2">P2</span></td><td class="k">Working agreements for waves</td><td>For a multi-repo change, open one PR first and let the learnings land, then the rest; push batched commits instead of commit-push per fix. Avoids repeat false positives and overage.</td><td>Team</td></tr>
+    <tr><td><span class="pill p2">P2</span></td><td class="k">Learnings hygiene</td><td>Review the 24 new learnings at app.coderabbit.ai/learnings; delete any that encode a one-off. Check the Review Usage dashboard monthly.</td><td>Reimar</td></tr>
+    <tr><td><span class="pill p2">P2</span></td><td class="k">Re-measure monthly</td><td>Rerun the audit (dump, metrics, classification) and track: coverage ≥ 90 % of human PRs, wrong ≤ 10 %, substantive ≥ 45 %, overage 0. Candidate home: the octo-tools metrics reports (AB#4957).</td><td>Reimar</td></tr>
+    <tr><td><span class="pill p2">P2</span></td><td class="k">Copilot instructions file</td><td>Generate <code>.github/copilot-instructions.md</code> from the standards so both bots share the durable-docs and test-idiom rules. Optional.</td><td>Reimar</td></tr>
+  </table></div>
+
+  <h3>Proposed config changes, ready to paste</h3>
+<pre><code># .coderabbit.yaml (excerpt)
+reviews:
+  pre_merge_checks:
+    title:
+      mode: "error"
+  auto_review:
+    base_branches:
+      - "release/.*"
+      - "test/.*"
+      - "dev/.*"
+      - "feature/.*"
+  tools:
+    languagetool:
+      enabled: false
+  path_instructions:
+    - path: "**/*.cs"
+      instructions: >-
+        … existing text … Do NOT flag a null-forgiving `!` in test code
+        (tests/**) when the preceding assertion already fails on null
+        (Assert.NotNull, Should().NotBeNull(), Assert.That(x).IsNotNull()).
+        Before calling a public-API change a breaking change, confirm the
+        API exists on the default branch; code that never reached main has
+        no consumers.
+    - path: "**/*.md"
+      instructions: >-
+        Documentation is English-only and durable. Flag transient problem
+        notes ONLY on lines this PR adds or rewrites. A bare work-item
+        reference (AB#nnnn) may stay. A documented, tracked product
+        limitation is durable, not transient. Review a code example once
+        for correctness; do not iterate on its idiom across follow-up PRs.</code></pre>
+
+  <h2>How this was measured</h2>
+  <div class="two">
+    <div>
+      <h3>Deterministic layer</h3>
+      <ul>
+        <li>GraphQL and REST dump of all 275 PRs: reviews, review threads, replies, reactions, commits, timing.</li>
+        <li>Per PR: CodeRabbit status (reviewed, summary only, skipped with reason, absent), review events, actionable and nitpick counts, learnings, guideline citations, pre-merge check results, rate-limit and overage markers.</li>
+        <li>Per thread: severity and category from the comment header, author reply, bot confirmation or withdrawal, resolution.</li>
+      </ul>
+    </div>
+    <div>
+      <h3>Judgement layer</h3>
+      <ul>
+        <li>Seven agents read the 123 threads in PR dossiers (with local checkouts for code checks) and classified validity, substance, observed outcome, root cause and the config lever.</li>
+        <li>One skeptic agent tried to refute all 24 "wrong" verdicts; it overturned 3 to "correct but minor".</li>
+        <li>Heuristic acceptance from replies alone was 53 %; the judged substantive rate is 38 % because many "fixed" replies were compliance with wording nits.</li>
+      </ul>
+    </div>
+  </div>
+  <p class="note">The scripts (dump, metrics, batch dossiers, classification workflow, aggregation) live in the <code>audit/</code> folder of the central configuration repository; its README describes the monthly rerun.</p>
+
+  <h2>Appendix: the 20 findings judged wrong</h2>
+  <div class="tablewrap"><table>
+    <tr><th>PR</th><th>Thread</th><th>What the bot claimed</th></tr>
+    <tr><td>energy-community #103</td><td>CR-1</td><td>Proposed the wrong tenant accessor for the storage prefix; would have left root sessions unprefixed.</td></tr>
+    <tr><td>fire-guardians #6</td><td>CR-2</td><td>Reporter order loses JUnit output; four CI runs disproved it.</td></tr>
+    <tr><td>fire-guardians #6</td><td>CR-3</td><td>allowScripts must be version-pinned; contradicts AB#5071 D7.</td></tr>
+    <tr><td>landing-pages #4</td><td>CR-2</td><td>Same reporter-order claim, second repo, same day.</td></tr>
+    <tr><td>meshmakers-app #7</td><td>CR-1</td><td>allowScripts pinning; also mis-stated the CI lane as <code>npm ci</code>.</td></tr>
+    <tr><td>octo-asset-repo-services #36</td><td>CR-3</td><td>Nullable suppression on the assert-then-<code>!</code> test idiom.</td></tr>
+    <tr><td>octo-bot-services #20</td><td>CR-1, CR-2</td><td>Same nullable rule, twice, contradicted by the file's existing pattern.</td></tr>
+    <tr><td>octo-construction-kit #33</td><td>CR-1</td><td>Composite-key collision; the only producer uses a fixed UTC pattern.</td></tr>
+    <tr><td>octo-frontend-libraries #255</td><td>CR-5, CR-6</td><td>Vitest <code>.resolves.not.toThrow()</code> "fails"; it passes.</td></tr>
+    <tr><td>octo-mesh-adapter #40</td><td>CR-4</td><td>Breaking change on a node configuration that never reached main.</td></tr>
+    <tr><td>octo-mesh-adapter #46</td><td>CR-1</td><td>Transient-note flag on a pre-existing, tracked limitation.</td></tr>
+    <tr><td>octo-mesh-energy #1</td><td>CR-1</td><td>Reporter-order claim, third repo.</td></tr>
+    <tr><td>octo-office-integration #5</td><td>CR-2</td><td>Unhandled <code>done.fail</code> forms in a one-off codemod whose input had none.</td></tr>
+    <tr><td>octo-pipeline-templates #4</td><td>CR-1</td><td>Reporter-order claim in the shared CI template, Major severity.</td></tr>
+    <tr><td>octo-pipeline-templates #5</td><td>CR-1</td><td>Disputed an exit-128 hint that documents three observed CI throttles.</td></tr>
+    <tr><td>octo-pipeline-templates #6</td><td>CR-2</td><td>Required dual-catalog publishing on the false premise that private ⊇ public.</td></tr>
+    <tr><td>octo-pipeline-templates #6</td><td>COPILOT-1</td><td>Called the two-layer <code>-c</code> argument of octo-bpm a duplicate.</td></tr>
+    <tr><td>template-repo #3</td><td>CR-2</td><td>Reporter-order claim, fourth repo.</td></tr>
+    <tr><td>wwc26-landing-page #4</td><td>CR-2</td><td>allowScripts pinning, fifth repo.</td></tr>
+  </table></div>
+
+  <footer>Audit of github.com/meshmakers · window 2026-08-20 → 2026-09-09 · central config meshmakers/coderabbit@f31e05b · generated 2026-09-09</footer>
+</div>

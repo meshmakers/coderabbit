@@ -105,6 +105,10 @@ Other useful commands:
 - **Observe first**: prefer harvesting real review gaps (via
   `@coderabbitai emit path instructions` on active PRs) over writing
   speculative rules.
+- **Measure before tuning**: `audit/` holds the review-bot audit (coverage,
+  finding quality, root causes of wrong findings, config levers) with a
+  monthly rerun recipe and the KPI targets; the 2026-09-09 baseline report is
+  in `audit/reports/`.
 - Learnings are shared org-wide (`learnings.scope: global`) and managed at
   app.coderabbit.ai/learnings — delete bad ones there.
 - Azure Boards note: linked-work-item assessment is only documented for Azure
