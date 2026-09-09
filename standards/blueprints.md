@@ -5,6 +5,14 @@ repository. Blueprints are versioned CK+seed bundles installed via
 `octo-cli InstallBlueprint`; published versions are immutable and land in a
 GitHub-hosted catalog.
 
+## Catalogs
+
+Two GitHub-hosted catalogs exist — the private `blueprint-libraries-build` and
+the public `meshmakers.github.io` — and every environment reads both. Neither
+is a superset of the other: which catalog(s) a repository publishes to is a
+per-repository CI decision. Do not derive a missing-publish finding from the
+assumption that the private catalog contains the public one.
+
 ## Dependencies
 
 - `blueprint.yaml` `ckModelDependencies` and the `dependencies` header inside

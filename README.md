@@ -30,9 +30,15 @@ case-sensitive, and custom patterns extend the defaults rather than replacing
 them. Repo-specific rules therefore belong in the repo's own `CLAUDE.md`;
 `standards/` carries only what spans repositories.
 
-In addition, `knowledge_base.linked_repositories` links the contract-owning
-repositories (SDK, CK engine, communication SDK, helm charts, CI templates, …)
-into every review so CodeRabbit can flag cross-repo breaking changes.
+Cross-repository code context comes from `knowledge_base.automatic_linking_mode:
+auto` (private repositories may link private and public ones, public
+repositories only public ones). A manual `linked_repositories` list is not used:
+the plan analyzes at most **10** linked repositories, a fixed list gives every
+repository the same links whether relevant or not, and CodeRabbit warns on
+every review once the list exceeds the limit. Check what a review actually used
+in its walkthrough section "Linked repositories identified"; manual links are
+additive and can be reintroduced per repository if auto-linking misses a
+contract-owning repository.
 
 ## Configuration precedence
 
@@ -107,7 +113,7 @@ Other useful commands:
   `pre_merge_checks.title` instead.
 - When updating `standards/`, keep claims verifiable and current; stale rules
   (e.g. superseded framework versions) actively mislead reviews. The files
-  were last verified against the codebase on 2026-09-01.
+  were last verified against the codebase on 2026-09-09.
 
 ## Editing the configuration
 

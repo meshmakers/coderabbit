@@ -90,7 +90,17 @@ Docs and READMEs describe the target state. Flag notes documenting transient
 problems ("currently broken", "known issue for now", workarounds for bugs that
 are already tracked) — in-flight problems belong in the work-item tracker. A
 known-issue note is acceptable only when the problem survives releases and no
-fix is scheduled.
+fix is scheduled. In review, apply this only to lines the PR adds or rewrites:
+a bare `AB#nnnn` reference next to a durable rule may stay, a documented
+product limitation with a tracked work item is durable, and a code example is
+reviewed once for correctness rather than re-styled across follow-up PRs.
+
+## Secrets in documentation and scripts
+
+Documented `curl`/HTTP examples never use `-k`/`--insecure` and never pass a
+client secret or token as a command-line argument (it lands in shell history
+and process listings) — read secrets from an environment variable or stdin
+and trust the environment CA instead.
 
 ## Multi-tenancy (platform-wide)
 

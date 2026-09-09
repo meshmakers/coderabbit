@@ -85,6 +85,24 @@ introduces a second test or mocking framework into an existing project.
   `[Collection("AllocationGates")]` (`DisableParallelization = true`) —
   process-wide GC counters are corrupted by parallel tests; gates fail
   intermittently in the full suite while passing in isolation.
+- A test that resets process-wide static state (e.g.
+  `TenantContext.ResetServiceManagedCkModelImportGuardForTests`) must share
+  one collection with every test that depends on that state, or the project
+  must disable collection parallelization — otherwise it races the parallel
+  collections.
+- Fixtures that accept a local-database opt-out (`USE_LOCAL_MONGODB`) and
+  create a uniquely named database per run must drop it on dispose; only the
+  Testcontainer path may rely on container teardown.
+
+## Assertions and test idioms
+
+- Tests assert the behavioural contract, not only that an artefact was
+  produced — e.g. extract and check the rendered PDF text instead of stopping
+  at the `%PDF` header.
+- In test code a null-forgiving `!` directly after an assertion that already
+  fails on null (`Assert.NotNull`, `Should().NotBeNull()`,
+  `Assert.That(x).IsNotNull()`) is the accepted idiom; the org's
+  nullable-suppression rule targets production code — do not flag it.
 
 ## Cross-repo test coupling
 
@@ -97,8 +115,7 @@ octo-communication-sdk build/test.
 
 ## Frontend
 
-- octo-frontend-libraries and refinery-studio: Karma + Jasmine with the
-  ChromeHeadlessCI launcher (`ng test --watch=false
-  --browsers=ChromeHeadlessCI`) — flag Jest/Vitest introduction there.
-- Custom-app repos (template-repo descendants): Vitest + Playwright.
-- Passing Karma tests do not prove template type-safety — see `frontend.md`.
+All Angular repositories (the core pair since AB#5071, the custom-app family
+from the start) run Vitest through `@angular/build:unit-test` — flag
+Karma/Jasmine idioms and any second runner. Reporter semantics, Vitest matcher
+pitfalls and the strictTemplates gate are in `frontend.md`.

@@ -3,8 +3,9 @@
 Two distinct Angular families exist — do not transplant rules between them:
 
 1. **Core pair**: `octo-frontend-libraries` (the `@meshmakers/*` npm library
-   workspace) and `octo-frontend-refinery-studio` (the main web UI). Karma +
-   Jasmine (ChromeHeadlessCI), LCARS theme, `/:tenantId` routing.
+   workspace) and `octo-frontend-refinery-studio` (the main web UI). Vitest
+   via `@angular/build:unit-test` (Karma was retired under AB#5071), LCARS
+   theme, `/:tenantId` routing.
 2. **Custom-app family** (descendants of `template-repo`):
    energy-landing-page, wwc26-landing-page, voest-app, maco-app ClientApp.
    Tailwind 4 + Kendo default theme (maco-app uses the Kendo Material theme
@@ -35,7 +36,19 @@ All are on **Angular 22** (CLAUDE.md files claiming Angular 21 are stale).
 - The studio's spec build compiles the library **sources** from the sibling
   repo: the two repos' locked `@angular/*` patch versions must stay identical,
   or `npm test` fails with nominal-type errors while `ng build` stays green.
-  Flag an Angular bump in one repo that does not mention the other.
+  Flag an Angular bump in one repo that does not mention the other. This
+  lock-step rule binds ONLY the core pair: custom-app repos consume the
+  published packages and are not part of it — never ask an app PR to edit
+  another repository's package.json.
+
+## npm install scripts
+
+`allowScripts` entries in package.json are **name-only** by decision
+(AB#5071 D7): image and CI builds either install locklessly (package-lock.json
+is deleted first) or run with `--ignore-scripts`, so a version-qualified
+approval drifts out of coverage on every patch bump and the advisory returns.
+Do not request version-pinned allowScripts entries or lock-file-based
+hardening of that list.
 
 ## Library code rules
 
@@ -91,17 +104,29 @@ instead of stacking (AB#4255).
 
 ## Tests
 
-- Core pair: Karma + Jasmine with the ChromeHeadlessCI launcher; passing unit
-  tests do NOT prove template type-safety (the spec build only compiles
-  components reachable from specs) — `ng build` is the strictTemplates gate
-  for template-heavy PRs. In studio specs, stub `@meshmakers` components via
-  TestBed.overrideComponent instead of instantiating them (NG0203).
-- Custom-app family: Vitest — flag Karma idioms, and flag unit tests that
-  instantiate components importing `@meshmakers/shared-ui` (cronstrue ESM
-  breaks under Vitest; extract pure logic instead). Do not propose "an e2e
-  test" as the fallback: these repos have no standalone e2e setup (Playwright
-  is only the Vitest browser provider), and voest-app's CLAUDE.md explicitly
-  forbids proposing one.
+- All Angular repos run Vitest through `@angular/build:unit-test` (the core
+  pair since AB#5071) — flag Karma/Jasmine idioms and any second test runner.
+  Passing unit tests do NOT prove template type-safety (the spec build only
+  compiles components reachable from specs) — `ng build --configuration
+  development` is the strictTemplates gate for template-heavy PRs. In studio
+  specs, stub `@meshmakers` components via TestBed.overrideComponent instead
+  of instantiating them (NG0203); specs that share a Vitest chunk can see
+  class fields initialised from relative imports as undefined — prefer
+  structural checks over `instanceof`.
+- Reporter configuration: the builder hands a target-level `outputFile` to
+  every file-capable reporter, so `reporters: ["default", "junit"]` with one
+  `outputFile` does write the JUnit XML that CI publishes (verified on
+  published CI runs). Do not demand reporter tuples or a junit-first order.
+- `await expect(promise).resolves.not.toThrow()` passes on any resolved
+  promise: it is a weak assertion, not a failing test — suggest a stronger
+  matcher at most, never claim the test fails. `vi.restoreAllMocks()` does not
+  clear the call history of standalone `vi.fn()` stubs; describe-scoped stubs
+  need `vi.clearAllMocks()` or per-test creation.
+- Custom-app family: flag unit tests that instantiate components importing
+  `@meshmakers/shared-ui` (cronstrue ESM breaks under Vitest; extract pure
+  logic instead). Do not propose "an e2e test" as the fallback: these repos
+  have no standalone e2e setup (Playwright is only the Vitest browser
+  provider), and voest-app's CLAUDE.md explicitly forbids proposing one.
 
 ## Other frontends
 
