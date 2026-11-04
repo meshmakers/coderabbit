@@ -19,14 +19,19 @@ tone_instructions: >-
 
 reviews:
   profile: "chill"
-  request_changes_workflow: false   # never block a merge
+  # CodeRabbit requests changes on actionable findings and approves once they
+  # are resolved and the pre-merge checks pass; the org ruleset requires one
+  # approving review, so this approval gates the merge.
+  auto_approvals:
+    enabled: true
+    allow_author_approval: true
   high_level_summary: true
   collapse_walkthrough: true
   poem: false
 
   pre_merge_checks:
     title:
-      mode: "error"   # warning mode changed nothing (0 of 8 flagged titles were fixed in the first weeks); error fails the CodeRabbit status without blocking merges
+      mode: "error"   # warning mode changed nothing (0 of 8 flagged titles were fixed in the first weeks); error also withholds the CodeRabbit approval, so a wrong title blocks the merge
       requirements: >-
         Functional pull requests are titled
         "AB#<work item> <Fix|New|Chore|Refactor|Test|Docs>: <description>"
