@@ -17,9 +17,15 @@ than touching each repository individually.
 `standards/` holds the distilled OctoMesh knowledge that spans repositories —
 above all the cross-repo relationships (NuGet dependency chain, serialization
 parity, blueprint/pipeline contracts, CI conventions) that a reviewer inside a
-single repository cannot see. The files are pulled into every review through
-`knowledge_base.code_guidelines.filePatterns` as `coderabbit:standards/*.md`.
-This uses CodeRabbit's generic `repo:path` cross-repository guideline syntax
+single repository cannot see. Each file is listed in
+`knowledge_base.code_guidelines.filePatterns` as an entry with `files`
+(`coderabbit:standards/<name>.md`) and `applyTo` (the globs of the files it
+governs). These general standards files need `applyTo`: as a plain string
+entry CodeRabbit extracted their rules and applied none of them ("rules
+extracted, none applied; add applyTo"), because they have no directory scope in
+the reviewed repository. A new standards file needs its own entry. The review summary lists the applied files under "Additional context
+used → Code guidelines" and any skipped source under "Skipped guideline
+sources". This uses CodeRabbit's generic `repo:path` cross-repository guideline syntax
 (this repo just happens to be named `coderabbit`); files are read from this
 repository's **default branch**, and CodeRabbit reads at most 50 guideline
 files per review — keep `standards/` well below that.
