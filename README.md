@@ -40,6 +40,23 @@ in its walkthrough section "Linked repositories identified"; manual links are
 additive and can be reintroduced per repository if auto-linking misses a
 contract-owning repository.
 
+## Approval and the merge gate
+
+CodeRabbit is the approving reviewer of the organization
+(`reviews.auto_approvals.enabled: true`). It requests changes when a review
+has actionable findings and approves once they are resolved and the pre-merge
+checks pass. The organization ruleset `require-pr-for-main` requires one
+approving review on the default branch, so this approval is what normally
+unblocks a merge; an approval by a person satisfies the rule as well.
+
+- A title that does not match `AB#<id> <Fix|New|Chore|Refactor|Test|Docs>: …`
+  fails the title check, and CodeRabbit then withholds its approval.
+- After a push CodeRabbit reviews only the new commits. When nothing
+  reviewable changed (for example a pure rebase) it skips, and no new approval
+  follows — comment `@coderabbitai full review` on the pull request.
+- CodeRabbit cannot resolve review threads itself; resolve them after fixing
+  or answering the finding.
+
 ## Configuration precedence
 
 CodeRabbit resolves settings top-down; **without inheritance, only the
