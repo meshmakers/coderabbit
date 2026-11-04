@@ -301,7 +301,7 @@ knowledge_base:
       - files: "coderabbit:standards/dotnet.md"
         applyTo: "**/*.cs,**/*.csproj,**/*.props,**/*.targets,**/*.sln,**/*.slnx,**/global.json,**/nuget.config,**/NuGet.Config,**/NuGet.config,**/ck-*.yaml,**/ck-*.cache.json"
       - files: "coderabbit:standards/testing.md"
-        applyTo: "**/*Tests/**,**/tests/**,**/*Tests.cs,**/*Test.cs,**/*.spec.ts,**/*.test.ts,**/vitest.config.*,**/*.csproj,**/package.json,**/global.json,**/xunit.runner.json"
+        applyTo: "**/*Tests/**,**/tests/**,**/*Tests.cs,**/*Test.cs,**/*.spec.ts,**/*.test.ts,**/vitest.config.*,**/*.csproj,**/package.json,**/global.json,**/xunit.runner.json,**/azure-pipelines*.yml"
       - files: "coderabbit:standards/frontend.md"
         applyTo: "**/*.ts,**/*.html,**/*.scss,**/*.css,**/package.json,**/angular.json,**/tsconfig*.json,**/.npmrc,**/*.graphql,**/config.json"
       - files: "coderabbit:standards/construction-kit.md"
