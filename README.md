@@ -54,8 +54,9 @@ unblocks a merge; an approval by a person satisfies the rule as well.
 - After a push CodeRabbit reviews only the new commits. When nothing
   reviewable changed (for example a pure rebase) it skips, and no new approval
   follows — comment `@coderabbitai full review` on the pull request.
-- CodeRabbit cannot resolve review threads itself; resolve them after fixing
-  or answering the finding.
+- CodeRabbit does not reliably resolve its threads on its own after a fix.
+  Once a finding is fixed or answered, resolve the thread yourself or comment
+  `@coderabbitai resolve` to mark all of CodeRabbit's threads resolved.
 
 ## Configuration precedence
 
