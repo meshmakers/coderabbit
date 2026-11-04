@@ -31,7 +31,7 @@ reviews:
 
   pre_merge_checks:
     title:
-      mode: "error"   # warning mode changed nothing (0 of 8 flagged titles were fixed in the first weeks); a failed check leaves the CodeRabbit check run green but withholds the CodeRabbit approval, so a wrong title blocks the merge
+      mode: "error"   # warning mode changed nothing (0 of 8 flagged titles were fixed in the first weeks); a failed check leaves the CodeRabbit check run green and withholds CodeRabbit's approval; the merge then needs a human approval
       requirements: >-
         Functional pull requests are titled
         "AB#<work item> <Fix|New|Chore|Refactor|Test|Docs>: <description>"
@@ -299,19 +299,19 @@ knowledge_base:
       - files: "coderabbit:standards/organization.md"
         applyTo: "**/*"
       - files: "coderabbit:standards/dotnet.md"
-        applyTo: "**/*.cs,**/*.csproj,**/*.props,**/*.targets,**/*.sln,**/*.slnx,**/global.json,**/nuget.config"
+        applyTo: "**/*.cs,**/*.csproj,**/*.props,**/*.targets,**/*.sln,**/*.slnx,**/global.json,**/nuget.config,**/NuGet.Config,**/NuGet.config,**/ck-*.yaml,**/ck-*.cache.json"
       - files: "coderabbit:standards/testing.md"
-        applyTo: "**/*Tests/**,**/*Tests.cs,**/*Test.cs,**/*.spec.ts,**/*.test.ts,**/vitest.config.*,**/*.csproj,**/package.json"
+        applyTo: "**/*Tests/**,**/tests/**,**/*Tests.cs,**/*Test.cs,**/*.spec.ts,**/*.test.ts,**/vitest.config.*,**/*.csproj,**/package.json,**/global.json,**/xunit.runner.json"
       - files: "coderabbit:standards/frontend.md"
-        applyTo: "**/*.ts,**/*.html,**/*.scss,**/*.css,**/package.json,**/angular.json,**/tsconfig*.json,**/.npmrc"
+        applyTo: "**/*.ts,**/*.html,**/*.scss,**/*.css,**/package.json,**/angular.json,**/tsconfig*.json,**/.npmrc,**/*.graphql,**/config.json"
       - files: "coderabbit:standards/construction-kit.md"
         applyTo: "**/ConstructionKit/**,**/ckModel.yaml"
       - files: "coderabbit:standards/blueprints.md"
-        applyTo: "**/blueprint.yaml,**/seed-data/**,**/blueprints/**"
+        applyTo: "**/blueprint.yaml,**/seed-data/**,**/blueprints/**,**/pipelines/*/*.yaml"
       - files: "coderabbit:standards/pipelines.md"
         applyTo: "**/seed-data/**/*.yaml,**/data-flows/**,**/_pipelines/**,**/pipelines/**/*.yaml,**/data/**/*.yaml,**/Nodes/**/*.cs,**/*Node.cs"
       - files: "coderabbit:standards/ci-devops.md"
-        applyTo: "**/azure-pipelines*.yml,**/Directory.Build.props,**/charts/**,**/*.ps1,**/*.psm1,**/Dockerfile*,**/*.md"
+        applyTo: "**/azure-pipelines*.yml,**/Directory.Build.props,**/charts/**,**/base/values-*.yaml,**/clusters/**,**/manifests/**,**/pipelines/**,**/pages.yml,**/*.ps1,**/*.psm1,**/Dockerfile*,**/*.md"
   learnings:
     scope: "global"   # one shared learning pool for all repos; the default "auto" silos learnings on public repos
   pull_requests:
