@@ -59,14 +59,19 @@ unblocks a merge; an approval by a person satisfies the rule as well.
   fails the title check, and CodeRabbit then withholds its approval.
 - CodeRabbit reviews a pull request once, when it is opened or marked ready
   (`reviews.auto_review.auto_incremental_review: false`, drafts are skipped).
+  A draft that is marked ready may not be reviewed automatically: comment
+  `@coderabbitai review` after marking it ready.
   Later pushes are not reviewed automatically: after fixing findings comment
   `@coderabbitai review` to review the new commits and obtain the approval.
   Reason: the review quota is counted per pull request author and hour, and
   re-reviewing every push exhausted it (AB#8531). When nothing reviewable
   changed (for example a pure rebase) a review is skipped as well — comment
   `@coderabbitai full review` instead.
-- After fixing or answering a finding, resolve the thread yourself or comment
-  `@coderabbitai resolve` to mark all of CodeRabbit's threads resolved.
+- After fixing or answering a finding, resolve the individual threads, comment
+  `@coderabbitai review` and wait for that review to finish before relying on
+  the approval. Do not use the top-level `@coderabbitai resolve`: it resolves
+  threads, but with automatic approvals it also submits an approval without
+  reviewing the latest commit.
 
 ## Configuration precedence
 
