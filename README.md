@@ -57,9 +57,14 @@ unblocks a merge; an approval by a person satisfies the rule as well.
 
 - A title that does not match `AB#<id> <Fix|New|Chore|Refactor|Test|Docs>: …`
   fails the title check, and CodeRabbit then withholds its approval.
-- After a push CodeRabbit reviews only the new commits. When nothing
-  reviewable changed (for example a pure rebase) it skips, and no new approval
-  follows — comment `@coderabbitai full review` on the pull request.
+- CodeRabbit reviews a pull request once, when it is opened or marked ready
+  (`reviews.auto_review.auto_incremental_review: false`, drafts are skipped).
+  Later pushes are not reviewed automatically: after fixing findings comment
+  `@coderabbitai review` to review the new commits and obtain the approval.
+  Reason: the review quota is counted per pull request author and hour, and
+  re-reviewing every push exhausted it (AB#8531). When nothing reviewable
+  changed (for example a pure rebase) a review is skipped as well — comment
+  `@coderabbitai full review` instead.
 - After fixing or answering a finding, resolve the thread yourself or comment
   `@coderabbitai resolve` to mark all of CodeRabbit's threads resolved.
 

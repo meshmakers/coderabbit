@@ -49,7 +49,7 @@ reviews:
 
   auto_review:
     enabled: true
-    auto_incremental_review: true
+    auto_incremental_review: false   # review once when the PR opens or is marked ready; later pushes only on an explicit `@coderabbitai review` (AB#8531 - per-author hourly review quota is exhausted when every push is re-reviewed)
     auto_pause_after_reviewed_commits: 0   # default 5 silently pauses long-running PRs; our feature branches commit incrementally
     drafts: false
     base_branches:   # the default branch is always reviewed; only extra branches are listed here
