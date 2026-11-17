@@ -48,21 +48,28 @@ contract-owning repository.
 
 ## Approval and the merge gate
 
-CodeRabbit is the approving reviewer of the organization
-(`reviews.auto_approvals.enabled: true`). It requests changes when a review
+CodeRabbit is the approving reviewer (`reviews.auto_approvals.enabled: true`)
+for pull requests of every author not listed in
+`reviews.auto_review.ignore_usernames` (exception below). It requests changes when a review
 has actionable findings and approves once they are resolved and the pre-merge
 checks pass. The organization ruleset `require-pr-for-main` requires one
-approving review on the default branch, so this approval is what normally
-unblocks a merge; an approval by a person satisfies the rule as well.
+approving review on the default branch, so for those authors this approval is
+what normally unblocks a merge; an approval by a person satisfies the rule as
+well.
 
 - A title that does not match `AB#<id> <Fix|New|Chore|Refactor|Test|Docs>: …`
-  fails the title check, and CodeRabbit then withholds its approval.
+  fails the title check, and CodeRabbit then withholds its approval. The check
+  runs only inside a CodeRabbit review, so it does not apply to the authors
+  listed in `ignore_usernames`.
 - Pull requests authored by `mmgerald` (the account the agents open their PRs
   with) and by `dependabot[bot]` are not reviewed automatically
   (`reviews.auto_review.ignore_usernames`; exact, case-sensitive match on the
-  author's GitHub login). For `mmgerald`, Kassandra's review app
-  (`meshmakers-review[bot]`) reviews and approves instead (AB#9277). Pull
-  requests of every other author are reviewed as described below.
+  author's GitHub login). For these authors neither CodeRabbit's title check
+  nor its approval applies. For `mmgerald`, Kassandra's review app
+  (`meshmakers-review[bot]`) reviews and approves instead (AB#9277), and the
+  AB# title rule rests on the agent operating rules (plugin `octo-claude-pm`)
+  and that review app. Pull requests of every other author are reviewed as
+  described below.
 - CodeRabbit reviews a pull request once, when it is opened or marked ready
   (`reviews.auto_review.auto_incremental_review: false`, drafts are skipped).
   A draft that is marked ready may not be reviewed automatically: comment
@@ -149,7 +156,8 @@ Other useful commands:
 - Azure Boards note: linked-work-item assessment is only documented for Azure
   DevOps-hosted PRs. Recognition of `AB#<n>` references on GitHub PRs is
   undocumented — the AB# title convention is enforced via
-  `pre_merge_checks.title` instead.
+  `pre_merge_checks.title` instead, except for the authors in
+  `reviews.auto_review.ignore_usernames` (see "Approval and the merge gate").
 - When updating `standards/`, keep claims verifiable and current; stale rules
   (e.g. superseded framework versions) actively mislead reviews. The files
   were last verified against the codebase on 2026-09-09.

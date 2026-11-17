@@ -21,7 +21,9 @@ reviews:
   profile: "chill"
   # CodeRabbit requests changes on actionable findings and approves once they
   # are resolved and the pre-merge checks pass; the org ruleset requires one
-  # approving review, so this approval gates the merge.
+  # approving review, so this approval gates the merge. Not for authors in
+  # auto_review.ignore_usernames: CodeRabbit neither reviews nor approves their
+  # PRs (for mmgerald, Kassandra's review app approves instead).
   auto_approvals:
     enabled: true
     allow_author_approval: true
@@ -31,7 +33,7 @@ reviews:
 
   pre_merge_checks:
     title:
-      mode: "error"   # warning mode changed nothing (0 of 8 flagged titles were fixed in the first weeks); a failed check leaves the CodeRabbit check run green and withholds CodeRabbit's approval; the merge then needs a human approval
+      mode: "error"   # warning mode changed nothing (0 of 8 flagged titles were fixed in the first weeks); a failed check leaves the CodeRabbit check run green and withholds CodeRabbit's approval; the merge then needs a human approval. Runs only inside a CodeRabbit review, so not for authors in auto_review.ignore_usernames (for mmgerald the title rule rests on the agent operating rules and Kassandra's review app)
       requirements: >-
         Functional pull requests are titled
         "AB#<work item> <Fix|New|Chore|Refactor|Test|Docs>: <description>"
