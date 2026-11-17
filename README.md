@@ -57,6 +57,12 @@ unblocks a merge; an approval by a person satisfies the rule as well.
 
 - A title that does not match `AB#<id> <Fix|New|Chore|Refactor|Test|Docs>: …`
   fails the title check, and CodeRabbit then withholds its approval.
+- Pull requests authored by `mmgerald` (the account the agents open their PRs
+  with) and by `dependabot[bot]` are not reviewed automatically
+  (`reviews.auto_review.ignore_usernames`; exact, case-sensitive match on the
+  author's GitHub login). For `mmgerald`, Kassandra's review app
+  (`meshmakers-review[bot]`) reviews and approves instead (AB#9277). Pull
+  requests of every other author are reviewed as described below.
 - CodeRabbit reviews a pull request once, when it is opened or marked ready
   (`reviews.auto_review.auto_incremental_review: false`, drafts are skipped).
   A draft that is marked ready may not be reviewed automatically: comment

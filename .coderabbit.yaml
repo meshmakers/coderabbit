@@ -57,8 +57,9 @@ reviews:
       - "test/.*"      # integration branches such as test/0.2-dev
       - "dev/.*"       # long-running dev branches that receive stacked PRs
       - "feature/.*"
-    ignore_usernames:
+    ignore_usernames:   # exact, case-sensitive match on the PR author's GitHub login
       - "dependabot[bot]"
+      - "mmgerald"   # agent PRs are authored by mmgerald; Kassandra's review app (meshmakers-review[bot]) reviews and approves them instead (AB#9277)
 
   path_filters:
     - "!**/bin/**"
